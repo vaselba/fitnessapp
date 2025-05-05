@@ -1,0 +1,42 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "fitnessapp-d6dc8",
+          "appId": "1:143256797548:android:5f562b551f9b4d526eb349",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "fitnessapp-d6dc8",
+          "configurations": {
+            "android": "1:143256797548:android:5f562b551f9b4d526eb349",
+            "ios": "1:143256797548:ios:0000db9c33d0e6576eb349",
+            "macos": "1:143256797548:ios:0000db9c33d0e6576eb349",
+            "web": "1:143256797548:web:35ba6f99006ea5ab6eb349",
+            "windows": "1:143256797548:web:07bf2c5da51aebb96eb349"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}
