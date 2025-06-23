@@ -61,7 +61,9 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      await widget.llmService.sendMessage(_messageController.text);
+      // Get the current messages from the stream
+      final messages = await widget.llmService.getConversationStream().first;
+      await widget.llmService.sendMessage(_messageController.text, previousMessages: messages);
       _messageController.clear();
       _scrollToBottom();
     } catch (e) {

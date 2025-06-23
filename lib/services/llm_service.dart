@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/user_profile.dart';
 
 class Message {
   final String role;
@@ -41,8 +43,35 @@ class Message {
 class LLMService {
   static const String baseUrl = 'https://api.x.ai/v1/chat/completions';
   String? _apiKey;
+  UserProfile? _userProfile;
   
   LLMService();
+
+  String _createSystemPrompt() {
+    if (_userProfile == null) {
+      return 'You are a fitness assistant focused on providing workout guidance and motivation. Provide me a very short answer. Reasoning is not needed.';
+    }
+
+    final profile = _userProfile!;
+    final preferredWorkouts = profile.preferredWorkouts?.join(', ') ?? 'any type of workout';
+    
+    return '''You are a fitness assistant focused on providing personalized workout guidance and motivation. 
+You are talking to ${profile.name}, a ${profile.age} year old person who:
+- Has a fitness goal of: ${profile.fitnessGoal ?? 'general fitness'}
+- Works out ${profile.workoutsPerWeek ?? 3} times per week
+- Is at a ${profile.experienceLevel ?? 'beginner'} fitness level
+- Prefers: $preferredWorkouts
+${profile.healthConditions?.isNotEmpty == true ? '- Has the following health considerations: ${profile.healthConditions}' : ''}
+
+Provide short, personalized answers considering their profile. Reasoning is not needed.
+Use their name occasionally to make it more personal.
+All responses should be in ${profile.preferredLanguage == 'English' ? 'English' : 'English'}.''';
+  }
+
+  Future<void> _ensureUserProfile() async {
+    if (_userProfile != null) return;
+    _userProfile = await UserProfile.getCurrentUserProfile();
+  }
 
   Future<void> _ensureApiKey() async {
     print('Starting API key retrieval...'); // Debug log
@@ -86,9 +115,10 @@ class LLMService {
   }
 
   Future<String> sendMessage(String message, {List<Message>? previousMessages}) async {
-    print('Starting sendMessage...'); // Debug log
-    await _ensureApiKey();
-    print('API key ensured, proceeding with request...'); // Debug log
+    await Future.wait([
+      _ensureApiKey(),
+      _ensureUserProfile(),
+    ]);
     
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -100,38 +130,76 @@ class LLMService {
       final List<Map<String, String>> messages = [
         {
           'role': 'system',
-          'content': 'You are a fitness assistant focused on providing workout guidance and motivation. Provide me a very short answer. Reaosoning is not needed.'
+          'content': _createSystemPrompt()
         },
       ];
 
-      if (previousMessages != null) {
-        messages.addAll(
-          previousMessages.map((msg) => {
-            'role': msg.role,
-            'content': msg.content,
-          })
-        );
+      print('Processing previous messages. Count: ${previousMessages?.length ?? 0}'); // Debug log
+
+      // Handle previous conversation context if available
+      if (previousMessages != null && previousMessages.isNotEmpty) {
+        // Reverse the messages since they come in descending order from Firestore
+        final sortedMessages = List<Message>.from(previousMessages.reversed);
+        
+        // Create pairs of messages (user + assistant responses)
+        List<List<Message>> messagePairs = [];
+        for (int i = 0; i < sortedMessages.length - 1; i += 2) {
+          if (i + 1 < sortedMessages.length &&
+              sortedMessages[i].role == 'user' && 
+              sortedMessages[i + 1].role == 'assistant') {
+            messagePairs.add([sortedMessages[i], sortedMessages[i + 1]]);
+          }
+        }
+
+        // Take last 5 pairs if available
+        if (messagePairs.isNotEmpty) {
+          final recentPairs = messagePairs.length > 5 
+              ? messagePairs.sublist(messagePairs.length - 5) 
+              : messagePairs;
+          
+          print('Adding ${recentPairs.length} message pairs to context'); // Debug log
+          
+          // Add message pairs in chronological order
+          for (final pair in recentPairs) {
+            messages.add({
+              'role': 'user',
+              'content': pair[0].content,
+            });
+            messages.add({
+              'role': 'assistant',
+              'content': pair[1].content,
+            });
+            print('Added pair - User: ${pair[0].content.substring(0, min(20, pair[0].content.length))}...');
+          }
+        }
       }
 
+      // Add the current user message
       messages.add({
         'role': 'user',
         'content': message,
       });
 
-      print('Sending request to x.ai API...'); // Debug log
+      print('Final messages in request: ${messages.length}'); // Debug log
+
+      // Debug print of the complete API request body
+      final requestBody = {
+        'messages': messages,
+        'model': 'grok-3-mini',
+        'stream': false,
+        'temperature': 0.23,
+        'reasoning_effort': "low"
+      };
+      print('API Request Body: ${jsonEncode(requestBody)}'); // Debug log
+      
+      print('Sending request to x.ai API with ${messages.length} messages...'); // Debug log
       final response = await http.post(
         Uri.parse(baseUrl),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_apiKey',
         },
-        body: jsonEncode({
-          'messages': messages,
-          'model': 'grok-3-latest',
-          'stream': false,
-          'temperature': 0,
-          // 'reasoning_effort': "low"
-        }),
+        body: jsonEncode(requestBody),
       );
 
       print('Response received. Status code: ${response.statusCode}'); // Debug log

@@ -9,6 +9,11 @@ class UserProfile {
   final double weight;
   final double height;
   final String? apiToken;
+  final String? fitnessGoal;  // e.g., "lose weight", "build muscle", "improve endurance"
+  final int? workoutsPerWeek;
+  final String? experienceLevel;  // "beginner", "intermediate", "advanced"
+  final List<String>? preferredWorkouts;  // e.g., ["cardio", "strength", "yoga"]
+  final String? healthConditions;  // Any health conditions to consider
 
   UserProfile({
     required this.uid,
@@ -18,6 +23,11 @@ class UserProfile {
     required this.weight,
     required this.height,
     this.apiToken,
+    this.fitnessGoal,
+    this.workoutsPerWeek,
+    this.experienceLevel,
+    this.preferredWorkouts,
+    this.healthConditions,
   });
 
   bool get hasValidApiToken => true; // Always true since API token is now server-side
@@ -31,6 +41,11 @@ class UserProfile {
       'weight': weight,
       'height': height,
       'apiToken': apiToken,
+      'fitnessGoal': fitnessGoal,
+      'workoutsPerWeek': workoutsPerWeek,
+      'experienceLevel': experienceLevel,
+      'preferredWorkouts': preferredWorkouts,
+      'healthConditions': healthConditions,
     };
   }
 
@@ -43,6 +58,11 @@ class UserProfile {
       weight: (json['weight'] as num).toDouble(),
       height: (json['height'] as num).toDouble(),
       apiToken: json['apiToken'] as String?,
+      fitnessGoal: json['fitnessGoal'] as String?,
+      workoutsPerWeek: json['workoutsPerWeek'] as int?,
+      experienceLevel: json['experienceLevel'] as String?,
+      preferredWorkouts: (json['preferredWorkouts'] as List<dynamic>?)?.cast<String>(),
+      healthConditions: json['healthConditions'] as String?,
     );
   }
 
@@ -122,6 +142,11 @@ class UserProfile {
     double? weight,
     double? height,
     String? apiToken,
+    String? fitnessGoal,
+    int? workoutsPerWeek,
+    String? experienceLevel,
+    List<String>? preferredWorkouts,
+    String? healthConditions,
   }) {
     return UserProfile(
       uid: uid,
@@ -131,6 +156,11 @@ class UserProfile {
       weight: weight ?? this.weight,
       height: height ?? this.height,
       apiToken: apiToken ?? this.apiToken,
+      fitnessGoal: fitnessGoal ?? this.fitnessGoal,
+      workoutsPerWeek: workoutsPerWeek ?? this.workoutsPerWeek,
+      experienceLevel: experienceLevel ?? this.experienceLevel,
+      preferredWorkouts: preferredWorkouts ?? this.preferredWorkouts,
+      healthConditions: healthConditions ?? this.healthConditions,
     );
   }
 }

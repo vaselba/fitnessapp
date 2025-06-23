@@ -10,6 +10,11 @@
 .svn/
 migrate_working_dir/
 
+# Firebase configuration
+lib/firebase_options.dart
+google-services.json
+GoogleService-Info.plist
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -76,10 +81,6 @@ app.*.map.json
 **/macos/Flutter/Flutter-Debug.xcconfig
 **/macos/Flutter/Flutter-Release.xcconfig
 **/macos/Flutter/Flutter-Profile.xcconfig
-
-# Firebase configuration files
-google-services.json
-GoogleService-Info.plist
 
 # Environment files
 .env*
