@@ -20,6 +20,15 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+        - name: Install Firebase CLI
+  run: npm install -g firebase-tools
+
+- name: Install FlutterFire CLI
+  run: flutter pub global activate flutterfire_cli
+
+- name: Generate firebase_options.dart
+  run: flutterfire configure --yes --project=<your-firebase-project-id>
+
       - name: Build web
         run: flutter build web --release --base-href /fitnessapp/
 
