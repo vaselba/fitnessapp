@@ -63,7 +63,8 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       // Get the current messages from the stream
       final messages = await widget.llmService.getConversationStream().first;
-      await widget.llmService.sendMessage(_messageController.text, previousMessages: messages);
+      await widget.llmService
+          .sendMessage(_messageController.text, previousMessages: messages);
       _messageController.clear();
       _scrollToBottom();
     } catch (e) {
@@ -120,7 +121,7 @@ class _ChatScreenState extends State<ChatScreen> {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         child: Card(
-          color: isUser 
+          color: isUser
               ? Theme.of(context).colorScheme.primaryContainer
               : Theme.of(context).colorScheme.surface,
           elevation: 2,
@@ -135,26 +136,30 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
-              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   message.content,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isUser
-                        ? Theme.of(context).colorScheme.onPrimaryContainer
-                        : Theme.of(context).colorScheme.onSurface,
-                  ),
+                        color: isUser
+                            ? Theme.of(context).colorScheme.onPrimaryContainer
+                            : Theme.of(context).colorScheme.onSurface,
+                      ),
                 ),
                 if (message.timestamp != null) ...[
                   const SizedBox(height: 4),
                   Text(
                     _formatTimestamp(message.timestamp!),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isUser
-                          ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7)
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                          color: isUser
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer
+                                  .withOpacity(0.7)
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                   ),
                 ],
               ],
@@ -187,7 +192,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     widget.language == 'Български'
                         ? 'Грешка при зареждане на съобщенията'
                         : 'Error loading messages',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 );
               }
@@ -196,7 +202,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              final messages = snapshot.data!;
+              // Reverse messages so newest is at the bottom
+              final messages = List<Message>.from(snapshot.data!.reversed);
               if (messages.isEmpty) {
                 return Center(
                   child: Text(
@@ -208,38 +215,59 @@ class _ChatScreenState extends State<ChatScreen> {
                 );
               }
 
-              // Messages are already in reverse order from Firestore
+              // Scroll to bottom when new messages arrive
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients) {
+                  _scrollController
+                      .jumpTo(_scrollController.position.maxScrollExtent);
+                }
+              });
+
               return ListView.separated(
                 controller: _scrollController,
                 itemCount: messages.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 8),
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                itemBuilder: (context, index) => _buildMessageBubble(messages[index]),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                itemBuilder: (context, index) =>
+                    _buildMessageBubble(messages[index]),
               );
             },
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: TextField(
-            controller: _messageController,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              hintText: widget.language == 'Български'
-                  ? 'Отговори тук...'
-                  : 'Answer here...',
-              suffixIcon: _isLoading
-                  ? const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: CircularProgressIndicator(),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    hintText: widget.language == 'Български'
+                        ? 'Отговори тук...'
+                        : 'Answer here...',
+                  ),
+                  maxLines: 3,
+                  onSubmitted: (_) => _canSend ? _sendMessage() : null,
+                  enabled: !_isLoading,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _isLoading
+                  ? const SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: Padding(
+                        padding: EdgeInsets.all(4),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     )
                   : IconButton(
                       icon: const Icon(Icons.send),
-                      onPressed: _canSend ? _sendMessage : null,
+                      onPressed: _canSend && !_isLoading ? _sendMessage : null,
                     ),
-            ),
-            maxLines: 3,
-            onSubmitted: (_) => _canSend ? _sendMessage() : null,
+            ],
           ),
         ),
       ],
