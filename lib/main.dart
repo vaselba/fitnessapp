@@ -115,6 +115,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _loadProfile();
+    // Sync messages from Firestore to Hive on app start
+    _llmService.syncMessagesFromFirestore();
   }
 
   Future<void> _loadProfile() async {
