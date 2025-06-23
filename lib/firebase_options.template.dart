@@ -30,50 +30,50 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'your-api-key',
-    appId: 'your-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    authDomain: 'your-auth-domain',
-    storageBucket: 'your-storage-bucket',
-    measurementId: 'your-measurement-id',
+    apiKey: 'YOUR_WEB_API_KEY',
+    appId: 'YOUR_WEB_APP_ID',
+    messagingSenderId: 'YOUR_WEB_MESSAGING_SENDER_ID',
+    projectId: 'YOUR_WEB_PROJECT_ID',
+    authDomain: 'YOUR_WEB_AUTH_DOMAIN',
+    storageBucket: 'YOUR_WEB_STORAGE_BUCKET',
+    measurementId: 'YOUR_WEB_MEASUREMENT_ID',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'your-api-key',
-    appId: 'your-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    storageBucket: 'your-storage-bucket',
+    apiKey: 'YOUR_ANDROID_API_KEY',
+    appId: 'YOUR_ANDROID_APP_ID',
+    messagingSenderId: 'YOUR_ANDROID_MESSAGING_SENDER_ID',
+    projectId: 'YOUR_ANDROID_PROJECT_ID',
+    storageBucket: 'YOUR_ANDROID_STORAGE_BUCKET',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'your-api-key',
-    appId: 'your-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    storageBucket: 'your-storage-bucket',
-    iosClientId: 'your-ios-client-id',
-    iosBundleId: 'your-bundle-id',
+    apiKey: 'YOUR_IOS_API_KEY',
+    appId: 'YOUR_IOS_APP_ID',
+    messagingSenderId: 'YOUR_IOS_MESSAGING_SENDER_ID',
+    projectId: 'YOUR_IOS_PROJECT_ID',
+    storageBucket: 'YOUR_IOS_STORAGE_BUCKET',
+    iosClientId: 'YOUR_IOS_CLIENT_ID',
+    iosBundleId: 'YOUR_IOS_BUNDLE_ID',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'your-api-key',
-    appId: 'your-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    storageBucket: 'your-storage-bucket',
-    iosClientId: 'your-ios-client-id',
-    iosBundleId: 'your-bundle-id',
+    apiKey: 'YOUR_MACOS_API_KEY',
+    appId: 'YOUR_MACOS_APP_ID',
+    messagingSenderId: 'YOUR_MACOS_MESSAGING_SENDER_ID',
+    projectId: 'YOUR_MACOS_PROJECT_ID',
+    storageBucket: 'YOUR_MACOS_STORAGE_BUCKET',
+    iosClientId: 'YOUR_MACOS_CLIENT_ID',
+    iosBundleId: 'YOUR_MACOS_BUNDLE_ID',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'your-api-key',
-    appId: 'your-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    authDomain: 'your-auth-domain',
-    storageBucket: 'your-storage-bucket',
-    measurementId: 'your-measurement-id',
+    apiKey: 'YOUR_WINDOWS_API_KEY',
+    appId: 'YOUR_WINDOWS_APP_ID',
+    messagingSenderId: 'YOUR_WINDOWS_MESSAGING_SENDER_ID',
+    projectId: 'YOUR_WINDOWS_PROJECT_ID',
+    authDomain: 'YOUR_WINDOWS_AUTH_DOMAIN',
+    storageBucket: 'YOUR_WINDOWS_STORAGE_BUCKET',
+    measurementId: 'YOUR_WINDOWS_MEASUREMENT_ID',
   );
 }
