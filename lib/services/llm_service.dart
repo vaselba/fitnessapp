@@ -143,6 +143,20 @@ All responses should be in \\${profile.preferredLanguage}.''';
     await box.addAll(messages);
   }
 
+  // Sync all messages from Firestore to Hive (call on app start/login)
+  Future<void> syncMessagesFromFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('conversations')
+        .orderBy('timestamp', descending: false)
+        .get();
+    final messages = snapshot.docs.map((doc) => Message.fromJson(doc.data())).toList();
+    await cacheMessages(messages);
+  }
+
   Future<String> sendMessage(String message, {List<Message>? previousMessages}) async {
     await Future.wait([
       _ensureApiKey(),
