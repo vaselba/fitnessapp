@@ -27,7 +27,7 @@ jobs:
         run: flutter pub global activate flutterfire_cli
 
       - name: Generate firebase_options.dart
-        run: flutterfire configure --yes --project=<your-firebase-project-id>
+        run: flutterfire configure --yes --project=fitnessapp-d6dc8
 
       - name: Build web
         run: flutter build web --release --base-href /fitnessapp/
