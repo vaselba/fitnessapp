@@ -33,7 +33,7 @@ https://vaselba.github.io/fitnessapp/
 - GitHub Pages (Web deployment)
 
 ## 🔒 Security
-Your data is protected with Firebase. API keys are public, but your personal info is private and secure.
+Your data is protected with Firebase.
 
 ## 🙌 Get Involved
 Found a bug or have a feature idea? Open an issue or contribute on GitHub!
