@@ -49,7 +49,7 @@ class LLMService {
 
   String _createSystemPrompt() {
     if (_userProfile == null) {
-      return 'You are a fitness assistant focused on providing workout guidance and motivation. Provide me a very short answer. Reasoning is not needed.';
+      return 'Please respond only in Bulgarian. You are a fitness assistant focused on providing workout guidance and motivation. Provide me a very short answer. Reasoning is not needed.';
     }
 
     final profile = _userProfile!;
@@ -65,7 +65,7 @@ ${profile.healthConditions?.isNotEmpty == true ? '- Has the following health con
 
 Provide short, personalized answers considering their profile. Reasoning is not needed.
 Use their name occasionally to make it more personal.
-All responses should be in ${profile.preferredLanguage == 'English' ? 'English' : 'English'}.''';
+All responses should be in \\${profile.preferredLanguage}.''';
   }
 
   Future<void> _ensureUserProfile() async {
@@ -202,16 +202,18 @@ All responses should be in ${profile.preferredLanguage == 'English' ? 'English' 
         body: jsonEncode(requestBody),
       );
 
-      print('Response received. Status code: ${response.statusCode}'); // Debug log
-      print('Response body: ${response.body}'); // Debug log
+      print('Response received. Status code: \\${response.statusCode}'); // Debug log
+      // Decode response body as UTF-8 to handle Cyrillic properly
+      final decodedBody = utf8.decode(response.bodyBytes);
+      print('Response body: \\${decodedBody}'); // Debug log
 
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
+        final responseData = jsonDecode(decodedBody);
         aiResponse = responseData['choices'][0]['message']['content'] as String;
       } else {
-        final errorBody = response.body.isNotEmpty ? jsonDecode(response.body) : null;
+        final errorBody = decodedBody.isNotEmpty ? jsonDecode(decodedBody) : null;
         final errorMessage = errorBody != null ? errorBody['error']?.toString() ?? 'Unknown error' : 'Empty response';
-        throw Exception('API call failed with status code ${response.statusCode}: $errorMessage');
+        throw Exception('API call failed with status code \\${response.statusCode}: \\${errorMessage}');
       }
     } catch (e) {
       print('Error during message send: ${e.toString()}'); // Debug log
