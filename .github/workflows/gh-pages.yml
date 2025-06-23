@@ -3,7 +3,7 @@ name: Deploy Flutter Web to GitHub Pages
 on:
   push:
     branches:
-      - master  # Change this if your default branch is not 'main'
+      - main  # Change this if your default branch is not 'main'
 
 jobs:
   build-and-deploy:
@@ -21,13 +21,9 @@ jobs:
         run: flutter pub get
 
       - name: Build web
-        run: flutter build web --release
+        run: flutter build web --release --base-href /lyrics_app/
 
-      - name: Set base href for GitHub Pages
-        run: |
-          sed -i 's|<base href="/fitnessapp/">|<base href="/fitnessapp/">|' build/web/index.html
-
-      - name: Deploy to GitHub Pages
+      - name:  Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
