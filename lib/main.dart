@@ -20,23 +20,50 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void _toggleTheme(bool isDark) {
+    setState(() {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Fitnessa',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 152, 11, 196)),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromARGB(255, 152, 11, 196)),
+        brightness: Brightness.light,
       ),
-      home: const AuthWrapper(),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromARGB(255, 152, 11, 196),
+            brightness: Brightness.dark),
+        brightness: Brightness.dark,
+      ),
+      themeMode: _themeMode,
+      home: AuthWrapper(
+        onToggleTheme: _toggleTheme,
+        isDarkMode: _themeMode == ThemeMode.dark,
+      ),
     );
   }
 }
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+  final void Function(bool)? onToggleTheme;
+  final bool? isDarkMode;
+  const AuthWrapper({super.key, this.onToggleTheme, this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +73,12 @@ class AuthWrapper extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
         }
-        
         if (snapshot.hasData) {
-          return const ProfileCheck();
+          return ProfileCheck(
+            onToggleTheme: onToggleTheme,
+            isDarkMode: isDarkMode,
+          );
         }
-        
         return const LoginScreen();
       },
     );
@@ -58,7 +86,9 @@ class AuthWrapper extends StatelessWidget {
 }
 
 class ProfileCheck extends StatelessWidget {
-  const ProfileCheck({super.key});
+  final void Function(bool)? onToggleTheme;
+  final bool? isDarkMode;
+  const ProfileCheck({super.key, this.onToggleTheme, this.isDarkMode});
 
   Future<bool> _hasProfile() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -80,11 +110,13 @@ class ProfileCheck extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
         }
-        
         if (snapshot.data == true) {
-          return const MyHomePage(title: 'Fitnessa');
+          return MyHomePage(
+            title: 'Fitnessa',
+            onToggleTheme: onToggleTheme,
+            isDarkMode: isDarkMode,
+          );
         }
-        
         return const ProfileSetupScreen();
       },
     );
@@ -92,9 +124,11 @@ class ProfileCheck extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
+  const MyHomePage(
+      {super.key, required this.title, this.onToggleTheme, this.isDarkMode});
   final String title;
+  final void Function(bool)? onToggleTheme;
+  final bool? isDarkMode;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -204,7 +238,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _userProfile = updatedProfile;
       _language = updatedProfile.preferredLanguage;
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -233,6 +267,33 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         automaticallyImplyLeading: false,
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              children: [
+                Icon(
+                  widget.isDarkMode ?? false
+                      ? Icons.nightlight_round
+                      : Icons.wb_sunny,
+                  color: widget.isDarkMode ?? false
+                      ? Colors.amber[200]
+                      : Colors.amber[800],
+                  size: 22,
+                ),
+                Switch(
+                  value: widget.isDarkMode ?? false,
+                  onChanged: (value) {
+                    if (widget.onToggleTheme != null) {
+                      widget.onToggleTheme!(value);
+                    }
+                  },
+                  activeColor: Theme.of(context).colorScheme.secondary,
+                  inactiveThumbColor: Theme.of(context).colorScheme.primary,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ],
+            ),
+          ),
           TextButton.icon(
             icon: const Icon(Icons.logout, color: Colors.white),
             label: Text(
