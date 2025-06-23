@@ -3,11 +3,19 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive/hive.dart';
+
 import '../models/user_profile.dart';
 
+part 'llm_service.g.dart';
+
+@HiveType(typeId: 0)
 class Message {
+  @HiveField(0)
   final String role;
+  @HiveField(1)
   final String content;
+  @HiveField(2)
   final DateTime? timestamp;
 
   Message({
@@ -112,6 +120,27 @@ All responses should be in \\${profile.preferredLanguage}.''';
       }
       rethrow;
     }
+  }
+
+  // Returns all cached messages from Hive, newest first
+  Future<List<Message>> getCachedMessages() async {
+    final box = Hive.box<Message>('messages');
+    final messages = box.values.toList();
+    messages.sort((a, b) => (b.timestamp ?? DateTime(0)).compareTo(a.timestamp ?? DateTime(0)));
+    return messages;
+  }
+
+  // Save a message to Hive
+  Future<void> cacheMessage(Message message) async {
+    final box = Hive.box<Message>('messages');
+    await box.add(message);
+  }
+
+  // Save multiple messages to Hive (replace all)
+  Future<void> cacheMessages(List<Message> messages) async {
+    final box = Hive.box<Message>('messages');
+    await box.clear();
+    await box.addAll(messages);
   }
 
   Future<String> sendMessage(String message, {List<Message>? previousMessages}) async {
@@ -230,8 +259,11 @@ All responses should be in \\${profile.preferredLanguage}.''';
       print('Attempting to save conversation...'); // Debug log
       await _saveConversation(message, aiResponse);
       print('Conversation saved successfully'); // Debug log
+      // Cache both user and AI messages locally
+      await cacheMessage(Message(role: 'user', content: message, timestamp: DateTime.now()));
+      await cacheMessage(Message(role: 'assistant', content: aiResponse, timestamp: DateTime.now()));
     } catch (e) {
-      print('Error saving conversation: ${e.toString()}'); // Debug log
+      print('Error saving conversation: \\${e.toString()}'); // Debug log
       // Don't rethrow - we still want to return the AI response even if saving fails
     }
 
@@ -270,31 +302,13 @@ All responses should be in \\${profile.preferredLanguage}.''';
     }
   }
 
-  Stream<List<Message>> getConversationStream() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      throw Exception('User must be authenticated');
+  // Use local cache for conversation stream
+  Stream<List<Message>> getConversationStream() async* {
+    final box = Hive.box<Message>('messages');
+    yield box.values.toList().reversed.toList();
+    // Optionally, listen to box changes for live updates
+    await for (final _ in box.watch()) {
+      yield box.values.toList().reversed.toList();
     }
-
-    print('Starting conversation stream for user: ${user.uid}'); // Debug log
-
-    return FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('conversations')
-        .orderBy('timestamp', descending: true)  // Changed to true to get newest first
-        .limit(50)
-        .snapshots()
-        .map((snapshot) {
-          print('Received snapshot with ${snapshot.docs.length} messages'); // Debug log
-          return snapshot.docs.map((doc) {
-            try {
-              return Message.fromJson(doc.data());
-            } catch (e) {
-              print('Error parsing message: ${e.toString()}'); // Debug log
-              rethrow;
-            }
-          }).toList();
-        });
   }
 }
