@@ -73,7 +73,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Fitnessa')),
+            MaterialPageRoute(
+              builder: (context) => MyHomePage(
+                title: 'Fitnessa',
+                language: _selectedLanguage,
+                onLanguageChanged: (lang) {}, // You can pass a real callback if needed
+                // Pass other required parameters if needed
+              ),
+            ),
           );
         }
       } on FirebaseException catch (e) {

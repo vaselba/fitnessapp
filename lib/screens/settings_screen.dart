@@ -201,6 +201,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              // Theme toggle
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _selectedLanguage == 'Български' ? 'Тъмен режим' : 'Dark Mode',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Switch(
+                    value: widget.isDarkMode ?? false,
+                    onChanged: (value) {
+                      if (widget.onToggleTheme != null) {
+                        widget.onToggleTheme!(value);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               DropdownButton<String>(
                 value: _selectedLanguage,
                 items: const [
