@@ -157,7 +157,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ? Theme.of(context)
                                   .colorScheme
                                   .onPrimaryContainer
-                                  .withOpacity(0.7)
+                                  .withValues(alpha: 179)
                               : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                   ),

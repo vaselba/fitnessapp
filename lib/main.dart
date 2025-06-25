@@ -336,12 +336,11 @@ class _MyHomePageState extends State<MyHomePage> {
               style: const TextStyle(color: Colors.white),
             ),
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               try {
                 await FirebaseAuth.instance.signOut();
-                if (!mounted) return;
               } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
                     content: Text(
                       _language == 'Български'

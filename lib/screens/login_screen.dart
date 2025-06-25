@@ -80,19 +80,19 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () async {
                 final email = controller.text.trim();
                 if (email.isNotEmpty) {
+                  final navigator = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
                   try {
                     await FirebaseAuth.instance
                         .sendPasswordResetEmail(email: email);
-                    if (!mounted) return;
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    navigator.pop();
+                    messenger.showSnackBar(
                       const SnackBar(
                           content: Text('Password reset email sent.')),
                     );
                   } catch (e) {
-                    if (!mounted) return;
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    navigator.pop();
+                    messenger.showSnackBar(
                       const SnackBar(
                           content: Text('Error sending reset email.')),
                     );
