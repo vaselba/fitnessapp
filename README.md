@@ -1,3 +1,5 @@
+[English](README.md) | [Български](README.bg.md)
+
 # Fitnessa – Your Personal Fitness Assistant
 
 Welcome to Fitnessa! This app is your smart companion for workouts, motivation, and fitness tracking. Whether you’re a beginner or a pro, Fitnessa helps you stay on track and reach your goals.
@@ -23,22 +25,18 @@ Welcome to Fitnessa! This app is your smart companion for workouts, motivation, 
 ## 💻 Try It Online
 
 You can use Fitnessa directly in your browser! Visit:
-```
-https://vaselba.github.io/fitnessapp/
-```
+[https://vaselba.github.io/fitnessapp/](https://vaselba.github.io/fitnessapp/)
 
 ## 🛠️ Tech Stack
-- Flutter (Dart)
-- Firebase (Auth, Firestore)
-- GitHub Pages (Web deployment)
+- [Flutter (Dart)](https://flutter.dev/)
+- [Firebase (Auth, Firestore)](https://firebase.google.com/)
+- [GitHub Pages (Web deployment)](https://pages.github.com/)
 
 ## 🔒 Security
 Your data is protected with Firebase.
 
 ## 🙌 Get Involved
-Found a bug or have a feature idea? Open an issue or contribute on GitHub!
+Found a bug or have a feature idea? Open an issue or contribute on [GitHub](https://github.com/vaselba/fitnessapp)!
 
----
-
-Thank you for choosing Fitnessa. Here’s to a healthier, stronger you! 💪
+[Български](README.bg.md)
 
