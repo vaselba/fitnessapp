@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // To use your own Firebase config, copy lib/firebase_options.template.dart to lib/firebase_options.dart and fill in your values.
 // Do NOT commit lib/firebase_options.dart to git.
 import 'firebase_options.dart';
@@ -10,6 +11,7 @@ import 'screens/login_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/chat_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'services/llm_service.dart';
 
 void main() async {
@@ -17,11 +19,13 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  final showOnboarding = await shouldShowOnboarding();
+  runApp(MyApp(showOnboarding: showOnboarding));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final bool showOnboarding;
+  const MyApp({super.key, this.showOnboarding = false});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -29,10 +33,35 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.light;
+  late bool _showOnboarding;
 
-  void _toggleTheme(bool isDark) {
+  @override
+  void initState() {
+    super.initState();
+    _showOnboarding = widget.showOnboarding;
+    _loadThemePreference();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isDark = prefs.getBool('isDarkMode') ?? false;
     setState(() {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  Future<void> _toggleTheme(bool isDark) async {
+    setState(() {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', isDark);
+  }
+
+  void _finishOnboarding() async {
+    await setOnboardingComplete();
+    setState(() {
+      _showOnboarding = false;
     });
   }
 
@@ -52,10 +81,14 @@ class _MyAppState extends State<MyApp> {
         brightness: Brightness.dark,
       ),
       themeMode: _themeMode,
-      home: AuthWrapper(
-        onToggleTheme: _toggleTheme,
-        isDarkMode: _themeMode == ThemeMode.dark,
-      ),
+      home: _showOnboarding
+          ? OnboardingScreen(
+              onFinish: _finishOnboarding,
+            )
+          : AuthWrapper(
+              onToggleTheme: _toggleTheme,
+              isDarkMode: _themeMode == ThemeMode.dark,
+            ),
     );
   }
 }
@@ -226,6 +259,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 onProfileUpdated: _onProfileUpdated,
                 onLanguageChanged: _onLanguageChanged,
                 currentLanguage: _language,
+                onToggleTheme: widget.onToggleTheme,
+                isDarkMode: widget.isDarkMode,
               );
 
       default:

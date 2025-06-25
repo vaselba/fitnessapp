@@ -7,6 +7,8 @@ class SettingsScreen extends StatefulWidget {
   final Function(UserProfile) onProfileUpdated;
   final Function(String) onLanguageChanged;
   final String currentLanguage;
+  final void Function(bool)? onToggleTheme;
+  final bool? isDarkMode;
 
   const SettingsScreen({
     super.key,
@@ -14,6 +16,8 @@ class SettingsScreen extends StatefulWidget {
     required this.onProfileUpdated,
     required this.onLanguageChanged,
     required this.currentLanguage,
+    this.onToggleTheme,
+    this.isDarkMode,
   });
 
   @override
@@ -174,6 +178,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              // Theme toggle
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _selectedLanguage == 'Български' ? 'Тъмен режим' : 'Dark Mode',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Switch(
+                    value: widget.isDarkMode ?? false,
+                    onChanged: (value) {
+                      if (widget.onToggleTheme != null) {
+                        widget.onToggleTheme!(value);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               DropdownButton<String>(
                 value: _selectedLanguage,
                 items: const [
