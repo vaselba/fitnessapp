@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../models/user_profile.dart';
-import '../models/activity.dart';
 
 class SettingsScreen extends StatefulWidget {
   final UserProfile userProfile;
@@ -36,33 +34,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // Mock activity data for demonstration
-  final List<Activity> _recentActivities = [
-    Activity(date: DateTime.now().subtract(const Duration(days: 1)), type: 'Cardio', durationMinutes: 30, calories: 200),
-    Activity(date: DateTime.now().subtract(const Duration(days: 2)), type: 'Strength', durationMinutes: 45, calories: 300),
-    Activity(date: DateTime.now().subtract(const Duration(days: 3)), type: 'Yoga', durationMinutes: 20, calories: 80),
-    Activity(date: DateTime.now().subtract(const Duration(days: 4)), type: 'HIIT', durationMinutes: 25, calories: 180),
-    Activity(date: DateTime.now().subtract(const Duration(days: 5)), type: 'Running', durationMinutes: 40, calories: 350),
-  ];
-
-  List<double> get _weeklyMinutes {
-    final now = DateTime.now();
-    return List.generate(7, (i) {
-      final day = now.subtract(Duration(days: i));
-      return _recentActivities
-          .where((a) => a.date.year == day.year && a.date.month == day.month && a.date.day == day.day)
-          .fold(0.0, (sum, a) => sum + a.durationMinutes);
-    }).reversed.toList();
-  }
-
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.userProfile.name);
-    _ageController = TextEditingController(text: widget.userProfile.age.toString());
-    _weightController = TextEditingController(text: widget.userProfile.weight.toString());
-    _heightController = TextEditingController(text: widget.userProfile.height.toString());
-    _apiTokenController = TextEditingController(text: widget.userProfile.apiToken ?? '');
+    _ageController =
+        TextEditingController(text: widget.userProfile.age.toString());
+    _weightController =
+        TextEditingController(text: widget.userProfile.weight.toString());
+    _heightController =
+        TextEditingController(text: widget.userProfile.height.toString());
+    _apiTokenController =
+        TextEditingController(text: widget.userProfile.apiToken ?? '');
     _selectedLanguage = widget.currentLanguage;
   }
 
@@ -90,18 +73,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         age: int.parse(_ageController.text),
         weight: double.parse(_weightController.text),
         height: double.parse(_heightController.text),
-        apiToken: _apiTokenController.text.isEmpty ? null : _apiTokenController.text,
+        apiToken:
+            _apiTokenController.text.isEmpty ? null : _apiTokenController.text,
       );
 
       await updatedProfile.save();
-      
-      if (!mounted) return;  // Add mounted check before using context
-      
+      if (!mounted) return;
       widget.onProfileUpdated(updatedProfile);
       widget.onLanguageChanged(_selectedLanguage);
     } on FirebaseException catch (e) {
       if (!mounted) return;
-
       String errorMessage;
       switch (e.code) {
         case 'permission-denied':
@@ -123,15 +104,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           errorMessage = _selectedLanguage == 'Български'
               ? 'Моля влезте отново в профила си'
               : 'Please sign in again';
-          // In case of authentication error, sign out the user
           await FirebaseAuth.instance.signOut();
+          if (!mounted) return;
           break;
         default:
           errorMessage = _selectedLanguage == 'Български'
-              ? 'Грешка при запазване на профила: ${e.message}'
+              ? 'Грешка при запазване на профила: e.message}'
               : 'Error saving profile: ${e.message}';
       }
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -141,7 +122,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -163,6 +143,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+            _selectedLanguage == 'Български' ? 'Потвърждение' : 'Confirmation'),
+        content: Text(_selectedLanguage == 'Български'
+            ? 'Сигурни ли сте, че искате да излезете?'
+            : 'Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(_selectedLanguage == 'Български' ? 'Отказ' : 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(_selectedLanguage == 'Български' ? 'Изход' : 'Logout'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
     try {
       await FirebaseAuth.instance.signOut();
     } catch (e) {
@@ -184,7 +185,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedLanguage == 'Български' ? 'Настройки' : 'Settings'),
+        title:
+            Text(_selectedLanguage == 'Български' ? 'Настройки' : 'Settings'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -199,57 +201,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // Activity & Progress Overview
-              Text(_selectedLanguage == 'Български' ? 'Активност и напредък' : 'Activity & Progress',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 180,
-                child: BarChart(
-                  BarChartData(
-                    alignment: BarChartAlignment.spaceAround,
-                    barTouchData: BarTouchData(enabled: false),
-                    titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: true, reservedSize: 28),
-                      ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (value, meta) {
-                            final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                            return Text(days[value.toInt() % 7]);
-                          },
-                        ),
-                      ),
-                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    ),
-                    borderData: FlBorderData(show: false),
-                    barGroups: List.generate(_weeklyMinutes.length, (i) => BarChartGroupData(
-                      x: i,
-                      barRods: [
-                        BarChartRodData(
-                          toY: _weeklyMinutes[i],
-                          color: Theme.of(context).colorScheme.primary,
-                          width: 16,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ],
-                    )),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(_selectedLanguage == 'Български' ? 'Последни активности' : 'Recent Activities',
-                  style: Theme.of(context).textTheme.titleMedium),
-              ..._recentActivities.map((a) => ListTile(
-                    leading: Icon(Icons.fitness_center),
-                    title: Text('${a.type} - ${a.durationMinutes.toInt()} min'),
-                    subtitle: Text('${a.date.month}/${a.date.day}/${a.date.year}'),
-                    trailing: a.calories != null ? Text('${a.calories!.toInt()} kcal') : null,
-                  )),
-              const Divider(height: 32),
               // Theme toggle
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -309,7 +260,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextFormField(
                 controller: _ageController,
                 decoration: InputDecoration(
-                  labelText: _selectedLanguage == 'Български' ? 'Възраст' : 'Age',
+                  labelText:
+                      _selectedLanguage == 'Български' ? 'Възраст' : 'Age',
                   border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
@@ -332,7 +284,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextFormField(
                 controller: _weightController,
                 decoration: InputDecoration(
-                  labelText: _selectedLanguage == 'Български' ? 'Тегло (кг)' : 'Weight (kg)',
+                  labelText: _selectedLanguage == 'Български'
+                      ? 'Тегло (кг)'
+                      : 'Weight (kg)',
                   border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
@@ -355,7 +309,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextFormField(
                 controller: _heightController,
                 decoration: InputDecoration(
-                  labelText: _selectedLanguage == 'Български' ? 'Височина (см)' : 'Height (cm)',
+                  labelText: _selectedLanguage == 'Български'
+                      ? 'Височина (см)'
+                      : 'Height (cm)',
                   border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
