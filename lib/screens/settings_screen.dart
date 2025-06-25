@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:convert';
 import '../models/user_profile.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -80,14 +78,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
 
       await updatedProfile.save();
-
-      if (!mounted) return; // Add mounted check before using context
-
+      if (!mounted) return;
       widget.onProfileUpdated(updatedProfile);
       widget.onLanguageChanged(_selectedLanguage);
     } on FirebaseException catch (e) {
       if (!mounted) return;
-
       String errorMessage;
       switch (e.code) {
         case 'permission-denied':
@@ -109,15 +104,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           errorMessage = _selectedLanguage == 'Български'
               ? 'Моля влезте отново в профила си'
               : 'Please sign in again';
-          // In case of authentication error, sign out the user
           await FirebaseAuth.instance.signOut();
+          if (!mounted) return;
           break;
         default:
           errorMessage = _selectedLanguage == 'Български'
-              ? 'Грешка при запазване на профила: ${e.message}'
+              ? 'Грешка при запазване на профила: e.message}'
               : 'Error saving profile: ${e.message}';
       }
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -127,7 +122,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -185,236 +179,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
     }
-  }
-
-  void _launchUrl(String url) async {
-    // For real apps, use url_launcher package
-    // ignore: avoid_print
-    print('Open URL: $url');
-  }
-
-  Future<void> _changePassword() async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(_selectedLanguage == 'Български'
-            ? 'Смяна на парола'
-            : 'Change Password'),
-        content: TextField(
-          controller: controller,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: _selectedLanguage == 'Български'
-                ? 'Нова парола'
-                : 'New Password',
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child:
-                  Text(_selectedLanguage == 'Български' ? 'Отказ' : 'Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child:
-                  Text(_selectedLanguage == 'Български' ? 'Запази' : 'Save')),
-        ],
-      ),
-    );
-    if (result != null && result.isNotEmpty) {
-      try {
-        await FirebaseAuth.instance.currentUser?.updatePassword(result);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_selectedLanguage == 'Български'
-                  ? 'Паролата е сменена успешно'
-                  : 'Password changed successfully'),
-              backgroundColor: Colors.green),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_selectedLanguage == 'Български'
-                  ? 'Грешка при смяна на паролата'
-                  : 'Error changing password'),
-              backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  Future<void> _deleteAccount() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-            _selectedLanguage == 'Български' ? 'Потвърждение' : 'Confirmation'),
-        content: Text(_selectedLanguage == 'Български'
-            ? 'Сигурни ли сте, че искате да изтриете акаунта си? Това действие е необратимо.'
-            : 'Are you sure you want to delete your account? This action is irreversible.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child:
-                  Text(_selectedLanguage == 'Български' ? 'Отказ' : 'Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child:
-                  Text(_selectedLanguage == 'Български' ? 'Изтрий' : 'Delete')),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      try {
-        final user = FirebaseAuth.instance.currentUser;
-        final uid = user?.uid;
-        if (uid != null) {
-          // Delete user profile from Firestore
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .delete();
-          // Delete chat history
-          final chatDocs = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('chats')
-              .get();
-          for (final doc in chatDocs.docs) {
-            await doc.reference.delete();
-          }
-        }
-        await user?.delete();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_selectedLanguage == 'Български'
-                  ? 'Акаунтът е изтрит'
-                  : 'Account deleted'),
-              backgroundColor: Colors.green),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_selectedLanguage == 'Български'
-                  ? 'Грешка при изтриване на акаунта'
-                  : 'Error deleting account'),
-              backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  Future<void> _clearChatHistory() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-            _selectedLanguage == 'Български' ? 'Потвърждение' : 'Confirmation'),
-        content: Text(_selectedLanguage == 'Български'
-            ? 'Сигурни ли сте, че искате да изчистите историята на чата?'
-            : 'Are you sure you want to clear chat history?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child:
-                  Text(_selectedLanguage == 'Български' ? 'Отказ' : 'Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child:
-                  Text(_selectedLanguage == 'Български' ? 'Изчисти' : 'Clear')),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      try {
-        final user = FirebaseAuth.instance.currentUser;
-        final uid = user?.uid;
-        if (uid != null) {
-          final chatDocs = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('chats')
-              .get();
-          for (final doc in chatDocs.docs) {
-            await doc.reference.delete();
-          }
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_selectedLanguage == 'Български'
-                  ? 'Историята на чата е изчистена'
-                  : 'Chat history cleared'),
-              backgroundColor: Colors.green),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_selectedLanguage == 'Български'
-                  ? 'Грешка при изчистване на историята'
-                  : 'Error clearing chat history'),
-              backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  Future<void> _exportData() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      final uid = user?.uid;
-      if (uid != null) {
-        final userDoc =
-            await FirebaseFirestore.instance.collection('users').doc(uid).get();
-        final chats = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('chats')
-            .get();
-        final data = {
-          'profile': userDoc.data(),
-          'chats': chats.docs.map((doc) => doc.data()).toList(),
-        };
-        final jsonStr = JsonEncoder.withIndent('  ').convert(data);
-        // For web, you might use AnchorElement for download; for mobile, use share or file APIs
-        // Here, just print to console as a placeholder
-        print(jsonStr);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(_selectedLanguage == 'Български'
-                  ? 'Данните са експортирани (виж конзолата)'
-                  : 'Data exported (see console)'),
-              backgroundColor: Colors.green),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(_selectedLanguage == 'Български'
-                ? 'Грешка при експортиране на данни'
-                : 'Error exporting data'),
-            backgroundColor: Colors.red),
-      );
-    }
-  }
-
-  Future<void> _importData() async {
-    // For a real app, use file picker and parse JSON
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(_selectedLanguage == 'Български'
-            ? 'Импорт на данни'
-            : 'Import Data'),
-        content: Text(_selectedLanguage == 'Български'
-            ? 'Тази функция предстои.'
-            : 'This feature is coming soon.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('OK'))
-        ],
-      ),
-    );
   }
 
   @override

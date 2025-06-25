@@ -338,6 +338,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: () async {
               try {
                 await FirebaseAuth.instance.signOut();
+                if (!mounted) return;
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(

@@ -83,21 +83,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   try {
                     await FirebaseAuth.instance
                         .sendPasswordResetEmail(email: email);
-                    if (mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Password reset email sent.')),
-                      );
-                    }
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Password reset email sent.')),
+                    );
                   } catch (e) {
-                    if (mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Error sending reset email.')),
-                      );
-                    }
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Error sending reset email.')),
+                    );
                   }
                 }
               },
