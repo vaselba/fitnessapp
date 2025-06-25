@@ -1,0 +1,36 @@
+name: Deploy Flutter Web to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master  # Change this if your default branch is not 'main'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Set base href for GitHub Pages
+        run: |
+          sed -i 's|<base href="/fitnessapp/">|<base href="/fitnessapp/">|' build/web/index.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          publish_branch: gh-pages
+          force_orphan: true

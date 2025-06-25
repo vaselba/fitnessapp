@@ -249,8 +249,13 @@ class _ChatScreenState extends State<ChatScreen> {
                         : 'Answer here...',
                   ),
                   maxLines: 3,
-                  onSubmitted: (_) => _canSend ? _sendMessage() : null,
+                  onSubmitted: (_) =>
+                      _canSend && !_isLoading ? _sendMessage() : null,
                   enabled: !_isLoading,
+                  textInputAction: TextInputAction.send,
+                  autofocus: true,
+                  // Accessibility
+                  textCapitalization: TextCapitalization.sentences,
                 ),
               ),
               const SizedBox(width: 8),
@@ -265,6 +270,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     )
                   : IconButton(
                       icon: const Icon(Icons.send),
+                      tooltip: widget.language == 'Български'
+                          ? 'Изпрати съобщение'
+                          : 'Send message',
                       onPressed: _canSend && !_isLoading ? _sendMessage : null,
                     ),
             ],

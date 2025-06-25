@@ -1,11 +1,11 @@
 {
-    "name": "fitness",
-    "short_name": "fitness",
+    "name": "Fitnessa – Your Personal Fitness Assistant",
+    "short_name": "Fitnessa",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
+    "background_color": "#ffffff",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Fitnessa is your smart fitness assistant for workouts, motivation, and progress tracking. Available on web, Android, iOS, Windows, Mac, and Linux.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
