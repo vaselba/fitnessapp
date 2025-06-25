@@ -135,9 +135,11 @@ All responses should be in \\${profile.preferredLanguage}.''';
         // Create pairs of messages (user + assistant responses)
         List<List<Message>> messagePairs = [];
         for (int i = 0; i < sortedMessages.length - 1; i += 2) {
-          if (i + 1 < sortedMessages.length &&
-              sortedMessages[i].role == 'user' &&
-              sortedMessages[i + 1].role == 'assistant') {
+          if (
+            i + 1 < sortedMessages.length &&
+            sortedMessages[i].role == 'user' &&
+            sortedMessages[i + 1].role == 'assistant'
+          ) {
             messagePairs.add([sortedMessages[i], sortedMessages[i + 1]]);
           }
         }

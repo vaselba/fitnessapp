@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../models/user_profile.dart';
+import '../widgets/settings_header.dart';
+import '../widgets/preferences_card.dart';
+import '../widgets/profile_form_card.dart';
+import '../utils/debouncer.dart';
+import '../state/app_state.dart';
 
 class SettingsScreen extends StatefulWidget {
   final UserProfile userProfile;
   final Function(UserProfile) onProfileUpdated;
-  final Function(String) onLanguageChanged;
   final String currentLanguage;
   final void Function(bool)? onToggleTheme;
   final bool? isDarkMode;
@@ -14,7 +19,6 @@ class SettingsScreen extends StatefulWidget {
     super.key,
     required this.userProfile,
     required this.onProfileUpdated,
-    required this.onLanguageChanged,
     required this.currentLanguage,
     this.onToggleTheme,
     this.isDarkMode,
@@ -30,9 +34,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _weightController;
   late TextEditingController _heightController;
   late TextEditingController _apiTokenController;
-  late String _selectedLanguage;
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  final Debouncer _debouncer = Debouncer(milliseconds: 400);
 
   @override
   void initState() {
@@ -46,7 +50,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextEditingController(text: widget.userProfile.height.toString());
     _apiTokenController =
         TextEditingController(text: widget.userProfile.apiToken ?? '');
-    _selectedLanguage = widget.currentLanguage;
   }
 
   @override
@@ -56,6 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _weightController.dispose();
     _heightController.dispose();
     _apiTokenController.dispose();
+    _debouncer.dispose();
     super.dispose();
   }
 
@@ -69,7 +73,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final updatedProfile = widget.userProfile.copyWith(
         name: _nameController.text,
-        preferredLanguage: _selectedLanguage,
+        preferredLanguage: Provider.of<AppState>(context, listen: false)
+            .language, // Use AppState language
         age: int.parse(_ageController.text),
         weight: double.parse(_weightController.text),
         height: double.parse(_heightController.text),
@@ -80,43 +85,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await updatedProfile.save();
       if (!mounted) return;
       widget.onProfileUpdated(updatedProfile);
-      widget.onLanguageChanged(_selectedLanguage);
+      // Removed language change callback, as it's now handled by AppState
     } on FirebaseException catch (e) {
       if (!mounted) return;
       String errorMessage;
       switch (e.code) {
         case 'permission-denied':
-          errorMessage = _selectedLanguage == 'Български'
-              ? 'Нямате разрешение за запазване на профила'
-              : 'You don\'t have permission to save the profile';
+          errorMessage =
+              Provider.of<AppState>(context, listen: false).language ==
+                      'Български'
+                  ? 'Нямате разрешение за запазване на профила'
+                  : 'You don\'t have permission to save the profile';
           break;
         case 'unavailable':
-          errorMessage = _selectedLanguage == 'Български'
-              ? 'Грешка в мрежовата връзка'
-              : 'Network connection error';
+          errorMessage =
+              Provider.of<AppState>(context, listen: false).language ==
+                      'Български'
+                  ? 'Грешка в мрежовата връзка'
+                  : 'Network connection error';
           break;
         case 'timeout':
-          errorMessage = _selectedLanguage == 'Български'
-              ? 'Времето за изчакване изтече'
-              : 'Connection timeout';
+          errorMessage =
+              Provider.of<AppState>(context, listen: false).language ==
+                      'Български'
+                  ? 'Времето за изчакване изтече'
+                  : 'Connection timeout';
           break;
         case 'unauthenticated':
-          errorMessage = _selectedLanguage == 'Български'
-              ? 'Моля влезте отново в профила си'
-              : 'Please sign in again';
+          errorMessage =
+              Provider.of<AppState>(context, listen: false).language ==
+                      'Български'
+                  ? 'Моля влезте отново в профила си'
+                  : 'Please sign in again';
           await FirebaseAuth.instance.signOut();
           if (!mounted) return;
           break;
         default:
-          errorMessage = _selectedLanguage == 'Български'
-              ? 'Грешка при запазване на профила: e.message}'
-              : 'Error saving profile: ${e.message}';
+          errorMessage =
+              Provider.of<AppState>(context, listen: false).language ==
+                      'Български'
+                  ? 'Грешка при запазване на профила: e.message}'
+                  : 'Error saving profile: ${e.message}';
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
           duration: const Duration(seconds: 5),
         ),
       );
@@ -125,11 +140,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _selectedLanguage == 'Български'
+            Provider.of<AppState>(context, listen: false).language ==
+                    'Български'
                 ? 'Неочаквана грешка при запазване на профила'
                 : 'Unexpected error saving profile',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
           duration: const Duration(seconds: 5),
         ),
       );
@@ -146,19 +162,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-            _selectedLanguage == 'Български' ? 'Потвърждение' : 'Confirmation'),
-        content: Text(_selectedLanguage == 'Български'
+        title: Text(Provider.of<AppState>(context, listen: false).language ==
+                'Български'
+            ? 'Потвърждение'
+            : 'Confirmation'),
+        content: Text(Provider.of<AppState>(context, listen: false).language ==
+                'Български'
             ? 'Сигурни ли сте, че искате да излезете?'
             : 'Are you sure you want to logout?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(_selectedLanguage == 'Български' ? 'Отказ' : 'Cancel'),
+            child: Text(
+                Provider.of<AppState>(context, listen: false).language ==
+                        'Български'
+                    ? 'Отказ'
+                    : 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(_selectedLanguage == 'Български' ? 'Изход' : 'Logout'),
+            child: Text(
+                Provider.of<AppState>(context, listen: false).language ==
+                        'Български'
+                    ? 'Изход'
+                    : 'Logout'),
           ),
         ],
       ),
@@ -171,11 +198,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _selectedLanguage == 'Български'
+            Provider.of<AppState>(context, listen: false).language ==
+                    'Български'
                 ? 'Грешка при изход от профила'
                 : 'Error logging out',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -183,189 +211,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
     return Scaffold(
       appBar: AppBar(
         title:
-            Text(_selectedLanguage == 'Български' ? 'Настройки' : 'Settings'),
+            Text(appState.language == 'Български' ? 'Настройки' : 'Settings'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _logout,
-            tooltip: _selectedLanguage == 'Български' ? 'Изход' : 'Logout',
+            tooltip: appState.language == 'Български' ? 'Изход' : 'Logout',
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Theme toggle
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _selectedLanguage == 'Български' ? 'Тъмен режим' : 'Dark Mode',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Switch(
-                    value: widget.isDarkMode ?? false,
-                    onChanged: (value) {
-                      if (widget.onToggleTheme != null) {
-                        widget.onToggleTheme!(value);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              DropdownButton<String>(
-                value: _selectedLanguage,
-                items: const [
-                  DropdownMenuItem(
-                    value: 'Български',
-                    child: Text('Български'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'English',
-                    child: Text('English'),
-                  ),
-                ],
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedLanguage = newValue;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: _selectedLanguage == 'Български' ? 'Име' : 'Name',
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return _selectedLanguage == 'Български'
-                        ? 'Моля въведете име'
-                        : 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _ageController,
-                decoration: InputDecoration(
-                  labelText:
-                      _selectedLanguage == 'Български' ? 'Възраст' : 'Age',
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return _selectedLanguage == 'Български'
-                        ? 'Моля въведете възраст'
-                        : 'Please enter your age';
-                  }
-                  final age = int.tryParse(value);
-                  if (age == null || age < 0 || age > 120) {
-                    return _selectedLanguage == 'Български'
-                        ? 'Моля въведете валидна възраст'
-                        : 'Please enter a valid age';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _weightController,
-                decoration: InputDecoration(
-                  labelText: _selectedLanguage == 'Български'
-                      ? 'Тегло (кг)'
-                      : 'Weight (kg)',
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return _selectedLanguage == 'Български'
-                        ? 'Моля въведете тегло'
-                        : 'Please enter your weight';
-                  }
-                  final weight = double.tryParse(value);
-                  if (weight == null || weight <= 0 || weight > 300) {
-                    return _selectedLanguage == 'Български'
-                        ? 'Моля въведете валидно тегло'
-                        : 'Please enter a valid weight';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _heightController,
-                decoration: InputDecoration(
-                  labelText: _selectedLanguage == 'Български'
-                      ? 'Височина (см)'
-                      : 'Height (cm)',
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return _selectedLanguage == 'Български'
-                        ? 'Моля въведете височина'
-                        : 'Please enter your height';
-                  }
-                  final height = double.tryParse(value);
-                  if (height == null || height <= 0 || height > 300) {
-                    return _selectedLanguage == 'Български'
-                        ? 'Моля въведете валидна височина'
-                        : 'Please enter a valid height';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _apiTokenController,
-                decoration: InputDecoration(
-                  labelText: 'API Token (Optional)',
-                  border: const OutlineInputBorder(),
-                  helperText: _selectedLanguage == 'Български'
-                      ? 'Незадължително: Добавете API токен за AI асистента'
-                      : 'Optional: Add API token for AI assistant',
-                ),
+              // Header with avatar and name
+              SettingsHeader(
+                name: _nameController.text,
+                language: appState.language,
               ),
               const SizedBox(height: 24),
-              if (_isLoading)
-                const Center(child: CircularProgressIndicator())
-              else
-                Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: _updateProfile,
-                      child: Text(
-                        _selectedLanguage == 'Български' ? 'Запази' : 'Save',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _logout,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: Text(
-                        _selectedLanguage == 'Български' ? 'Изход' : 'Logout',
-                      ),
-                    ),
-                  ],
-                ),
+              // Preferences Section
+              Text(
+                  appState.language == 'Български'
+                      ? 'Предпочитания'
+                      : 'Preferences',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              PreferencesCard(
+                selectedLanguage: appState.language,
+                onLanguageChanged: (String? newValue) {
+                  if (newValue != null) {
+                    appState.setLanguage(newValue);
+                  }
+                },
+                isDarkMode: appState.isDarkMode,
+                onToggleTheme: (value) {
+                  appState.setDarkMode(value);
+                },
+              ),
+              const SizedBox(height: 24),
+              // Profile Section
+              Text(appState.language == 'Български' ? 'Профил' : 'Profile',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              ProfileFormCard(
+                nameController: _nameController,
+                ageController: _ageController,
+                weightController: _weightController,
+                heightController: _heightController,
+                apiTokenController: _apiTokenController,
+                selectedLanguage: appState.language,
+                formKey: _formKey,
+                isLoading: _isLoading,
+                onSave: _updateProfile,
+                onLogout: _logout,
+                // Replace all validator: (value) {...} with e.g.:
+                // validator: (value) => Validators.validateAge(value, language: appState.language),
+              ),
             ],
           ),
         ),

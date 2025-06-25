@@ -12,16 +12,18 @@ class Activity {
   });
 
   Map<String, dynamic> toJson() => {
-    'date': date.toIso8601String(),
-    'type': type,
-    'durationMinutes': durationMinutes,
-    'calories': calories,
-  };
+        'date': date.toIso8601String(),
+        'type': type,
+        'durationMinutes': durationMinutes,
+        'calories': calories,
+      };
 
   factory Activity.fromJson(Map<String, dynamic> json) => Activity(
-    date: DateTime.parse(json['date'] as String),
-    type: json['type'] as String,
-    durationMinutes: (json['durationMinutes'] as num).toDouble(),
-    calories: json['calories'] != null ? (json['calories'] as num).toDouble() : null,
-  );
+        date: DateTime.parse(json['date'] as String),
+        type: json['type'] as String,
+        durationMinutes: (json['durationMinutes'] as num).toDouble(),
+        calories: json['calories'] != null
+            ? (json['calories'] as num).toDouble()
+            : null,
+      );
 }

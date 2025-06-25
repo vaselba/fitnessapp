@@ -13,48 +13,64 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<_OnboardingTip> _tips = [
-    _OnboardingTip(
-      icon: Icons.smart_toy,
-      color: Colors.deepPurple,
-      title: 'AI-powered Fitness Chat',
-      description: 'Get instant answers, personalized advice, and workout plans from your AI assistant.',
-    ),
-    _OnboardingTip(
-      icon: Icons.show_chart,
-      color: Colors.green,
-      title: 'Track Your Progress',
-      description: 'Monitor your workouts, goals, and achievements over time.',
-    ),
-    _OnboardingTip(
-      icon: Icons.palette,
-      color: Colors.amber,
-      title: 'Customizable Themes',
-      description: 'Switch between light and dark mode to match your style.',
-    ),
-    _OnboardingTip(
-      icon: Icons.language,
-      color: Colors.teal,
-      title: 'Multi-language Support',
-      description: 'Use the app in your preferred language for a better experience.',
-    ),
-    _OnboardingTip(
-      icon: Icons.lock_reset,
-      color: Colors.redAccent,
-      title: 'Easy Password Reset',
-      description: 'Forgot your password? Reset it quickly and securely from the login screen.',
-    ),
-    _OnboardingTip(
-      icon: Icons.settings,
-      color: Colors.blue,
-      title: 'Settings & Privacy',
-      description: 'Manage your profile, privacy, and app preferences anytime from the settings menu.',
-    ),
-  ];
+  List<Color> get _tipColors => [
+        Theme.of(context).colorScheme.primary,
+        Theme.of(context).colorScheme.secondary,
+        Theme.of(context).colorScheme.tertiary,
+        Theme.of(context).colorScheme.surfaceTint,
+        Theme.of(context).colorScheme.error,
+        Theme.of(context).colorScheme.primaryContainer,
+      ];
+
+  List<_OnboardingTip> get _tips => [
+        _OnboardingTip(
+          icon: Icons.smart_toy,
+          color: _tipColors[0],
+          title: 'AI-powered Fitness Chat',
+          description:
+              'Get instant answers, personalized advice, and workout plans from your AI assistant.',
+        ),
+        _OnboardingTip(
+          icon: Icons.show_chart,
+          color: _tipColors[1],
+          title: 'Track Your Progress',
+          description:
+              'Monitor your workouts, goals, and achievements over time.',
+        ),
+        _OnboardingTip(
+          icon: Icons.palette,
+          color: _tipColors[2],
+          title: 'Customizable Themes',
+          description:
+              'Switch between light and dark mode to match your style.',
+        ),
+        _OnboardingTip(
+          icon: Icons.language,
+          color: _tipColors[3],
+          title: 'Multi-language Support',
+          description:
+              'Use the app in your preferred language for a better experience.',
+        ),
+        _OnboardingTip(
+          icon: Icons.lock_reset,
+          color: _tipColors[4],
+          title: 'Easy Password Reset',
+          description:
+              'Forgot your password? Reset it quickly and securely from the login screen.',
+        ),
+        _OnboardingTip(
+          icon: Icons.settings,
+          color: _tipColors[5],
+          title: 'Settings & Privacy',
+          description:
+              'Manage your profile, privacy, and app preferences anytime from the settings menu.',
+        ),
+      ];
 
   void _nextPage() {
     if (_currentPage < _tips.length - 1) {
-      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.nextPage(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else {
       widget.onFinish();
     }
@@ -62,7 +78,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _prevPage() {
     if (_currentPage > 0) {
-      _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.previousPage(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
   }
 
@@ -90,7 +107,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: _tips.length,
-                  onPageChanged: (index) => setState(() => _currentPage = index),
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
                   itemBuilder: (context, index) {
                     final tip = _tips[index];
                     return Column(
@@ -98,9 +116,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       children: [
                         Icon(tip.icon, color: tip.color, size: 64),
                         const SizedBox(height: 24),
-                        Text(tip.title, style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
+                        Text(tip.title,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                            textAlign: TextAlign.center),
                         const SizedBox(height: 12),
-                        Text(tip.description, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
+                        Text(tip.description,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                            textAlign: TextAlign.center),
                       ],
                     );
                   },
@@ -111,12 +133,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: List.generate(
                   _tips.length,
                   (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _currentPage == index ? Theme.of(context).colorScheme.primary : Colors.grey[400],
+                      color: _currentPage == index
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey[400],
                     ),
                   ),
                 ),
@@ -131,7 +156,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   TextButton(onPressed: _skip, child: const Text('Skip')),
                   ElevatedButton(
                     onPressed: _nextPage,
-                    child: Text(_currentPage == _tips.length - 1 ? 'Get Started' : 'Next'),
+                    child: Text(_currentPage == _tips.length - 1
+                        ? 'Get Started'
+                        : 'Next'),
                   ),
                 ],
               ),
@@ -148,7 +175,11 @@ class _OnboardingTip {
   final Color color;
   final String title;
   final String description;
-  const _OnboardingTip({required this.icon, required this.color, required this.title, required this.description});
+  const _OnboardingTip(
+      {required this.icon,
+      required this.color,
+      required this.title,
+      required this.description});
 }
 
 Future<bool> shouldShowOnboarding() async {

@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import 'theme.dart';
+
 // To use your own Firebase config, copy lib/firebase_options.template.dart to lib/firebase_options.dart and fill in your values.
 // Do NOT commit lib/firebase_options.dart to git.
 import 'firebase_options.dart';
@@ -15,6 +18,7 @@ import 'screens/settings_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/llm_service.dart';
+import 'state/app_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +26,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   final showOnboarding = await shouldShowOnboarding();
-  runApp(MyApp(showOnboarding: showOnboarding));
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AppState(),
+      child: MyApp(showOnboarding: showOnboarding),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -89,17 +98,8 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Fitnessa',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromARGB(255, 152, 11, 196)),
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromARGB(255, 152, 11, 196),
-            brightness: Brightness.dark),
-        brightness: Brightness.dark,
-      ),
+      theme: appTheme,
+      darkTheme: appDarkTheme,
       themeMode: _themeMode,
       home: _showOnboarding
           ? OnboardingScreen(
@@ -120,7 +120,12 @@ class AuthWrapper extends StatelessWidget {
   final bool? isDarkMode;
   final String language;
   final void Function(String) onLanguageChanged;
-  const AuthWrapper({super.key, this.onToggleTheme, this.isDarkMode, required this.language, required this.onLanguageChanged});
+  const AuthWrapper(
+      {super.key,
+      this.onToggleTheme,
+      this.isDarkMode,
+      required this.language,
+      required this.onLanguageChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +154,12 @@ class ProfileCheck extends StatelessWidget {
   final bool? isDarkMode;
   final String language;
   final void Function(String) onLanguageChanged;
-  const ProfileCheck({super.key, this.onToggleTheme, this.isDarkMode, required this.language, required this.onLanguageChanged});
+  const ProfileCheck(
+      {super.key,
+      this.onToggleTheme,
+      this.isDarkMode,
+      required this.language,
+      required this.onLanguageChanged});
 
   Future<bool> _hasProfile() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -188,7 +198,12 @@ class ProfileCheck extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage(
-      {super.key, required this.title, this.onToggleTheme, this.isDarkMode, required this.language, required this.onLanguageChanged});
+      {super.key,
+      required this.title,
+      this.onToggleTheme,
+      this.isDarkMode,
+      required this.language,
+      required this.onLanguageChanged});
   final String title;
   final void Function(bool)? onToggleTheme;
   final bool? isDarkMode;
@@ -207,11 +222,31 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Mock activity data for demonstration
   final List<Activity> _recentActivities = [
-    Activity(date: DateTime.now().subtract(const Duration(days: 1)), type: 'Cardio', durationMinutes: 30, calories: 200),
-    Activity(date: DateTime.now().subtract(const Duration(days: 2)), type: 'Strength', durationMinutes: 45, calories: 300),
-    Activity(date: DateTime.now().subtract(const Duration(days: 3)), type: 'Yoga', durationMinutes: 20, calories: 80),
-    Activity(date: DateTime.now().subtract(const Duration(days: 4)), type: 'HIIT', durationMinutes: 25, calories: 180),
-    Activity(date: DateTime.now().subtract(const Duration(days: 5)), type: 'Running', durationMinutes: 40, calories: 350),
+    Activity(
+        date: DateTime.now().subtract(const Duration(days: 1)),
+        type: 'Cardio',
+        durationMinutes: 30,
+        calories: 200),
+    Activity(
+        date: DateTime.now().subtract(const Duration(days: 2)),
+        type: 'Strength',
+        durationMinutes: 45,
+        calories: 300),
+    Activity(
+        date: DateTime.now().subtract(const Duration(days: 3)),
+        type: 'Yoga',
+        durationMinutes: 20,
+        calories: 80),
+    Activity(
+        date: DateTime.now().subtract(const Duration(days: 4)),
+        type: 'HIIT',
+        durationMinutes: 25,
+        calories: 180),
+    Activity(
+        date: DateTime.now().subtract(const Duration(days: 5)),
+        type: 'Running',
+        durationMinutes: 40,
+        calories: 350),
   ];
 
   List<double> get _weeklyMinutes {
@@ -219,7 +254,10 @@ class _MyHomePageState extends State<MyHomePage> {
     return List.generate(7, (i) {
       final day = now.subtract(Duration(days: i));
       return _recentActivities
-          .where((a) => a.date.year == day.year && a.date.month == day.month && a.date.day == day.day)
+          .where((a) =>
+              a.date.year == day.year &&
+              a.date.month == day.month &&
+              a.date.day == day.day)
           .fold(0.0, (sum, a) => sum + a.durationMinutes);
     }).reversed.toList();
   }
@@ -243,9 +281,9 @@ class _MyHomePageState extends State<MyHomePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error loading profile'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Error loading profile'),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -271,16 +309,9 @@ class _MyHomePageState extends State<MyHomePage> {
               ? 'Профилът е обновен успешно'
               : 'Profile updated successfully',
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
       ),
     );
-  }
-
-  void _onLanguageChanged(String newLanguage) {
-    setState(() {
-      _language = newLanguage;
-    });
-    widget.onLanguageChanged(newLanguage);
   }
 
   Widget _buildProfileScreen() {
@@ -310,7 +341,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 24),
-              Text(_language == 'Български' ? 'Активност и напредък' : 'Activity & Progress',
+              Text(
+                  _language == 'Български'
+                      ? 'Активност и напредък'
+                      : 'Activity & Progress',
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               SizedBox(
@@ -321,7 +355,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     barTouchData: BarTouchData(enabled: false),
                     titlesData: FlTitlesData(
                       leftTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: true, reservedSize: 28),
+                        sideTitles:
+                            SideTitles(showTitles: true, reservedSize: 28),
                       ),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
@@ -332,32 +367,42 @@ class _MyHomePageState extends State<MyHomePage> {
                           },
                         ),
                       ),
-                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
                     borderData: FlBorderData(show: false),
-                    barGroups: List.generate(_weeklyMinutes.length, (i) => BarChartGroupData(
-                      x: i,
-                      barRods: [
-                        BarChartRodData(
-                          toY: _weeklyMinutes[i],
-                          color: Theme.of(context).colorScheme.primary,
-                          width: 16,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ],
-                    )),
+                    barGroups: List.generate(
+                        _weeklyMinutes.length,
+                        (i) => BarChartGroupData(
+                              x: i,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: _weeklyMinutes[i],
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 16,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ],
+                            )),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              Text(_language == 'Български' ? 'Последни активности' : 'Recent Activities',
+              Text(
+                  _language == 'Български'
+                      ? 'Последни активности'
+                      : 'Recent Activities',
                   style: Theme.of(context).textTheme.titleMedium),
               ..._recentActivities.map((a) => ListTile(
                     leading: Icon(Icons.fitness_center),
                     title: Text('${a.type} - ${a.durationMinutes.toInt()} min'),
-                    subtitle: Text('${a.date.month}/${a.date.day}/${a.date.year}'),
-                    trailing: a.calories != null ? Text('${a.calories!.toInt()} kcal') : null,
+                    subtitle:
+                        Text('${a.date.month}/${a.date.day}/${a.date.year}'),
+                    trailing: a.calories != null
+                        ? Text('${a.calories!.toInt()} kcal')
+                        : null,
                   )),
             ] else
               const CircularProgressIndicator(),
@@ -377,7 +422,6 @@ class _MyHomePageState extends State<MyHomePage> {
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: ChatScreen(
-            language: _language,
             llmService: _llmService,
           ),
         );
@@ -389,7 +433,6 @@ class _MyHomePageState extends State<MyHomePage> {
             : SettingsScreen(
                 userProfile: _userProfile!,
                 onProfileUpdated: _onProfileUpdated,
-                onLanguageChanged: _onLanguageChanged,
                 currentLanguage: _language,
                 onToggleTheme: widget.onToggleTheme,
                 isDarkMode: widget.isDarkMode,
@@ -419,8 +462,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       ? Icons.nightlight_round
                       : Icons.wb_sunny,
                   color: widget.isDarkMode ?? false
-                      ? Colors.amber[200]
-                      : Colors.amber[800],
+                      ? Theme.of(context).colorScheme.secondary
+                      : Theme.of(context).colorScheme.primary,
                   size: 22,
                 ),
                 Switch(
@@ -438,10 +481,10 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           TextButton.icon(
-            icon: const Icon(Icons.logout, color: Colors.white),
+            icon: const Icon(Icons.logout),
             label: Text(
               _language == 'Български' ? 'Изход' : 'Logout',
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
             ),
             onPressed: () async {
               final messenger = ScaffoldMessenger.of(context);
@@ -455,7 +498,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           ? 'Грешка при изход от профила'
                           : 'Error logging out',
                     ),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Theme.of(context).colorScheme.error,
                   ),
                 );
               }
@@ -480,7 +523,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: Theme.of(context).colorScheme.secondary,
         onTap: _onItemTapped,
       ),
     );

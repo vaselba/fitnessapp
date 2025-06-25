@@ -9,11 +9,12 @@ class UserProfile {
   final double weight;
   final double height;
   final String? apiToken;
-  final String? fitnessGoal;  // e.g., "lose weight", "build muscle", "improve endurance"
+  final String?
+      fitnessGoal; // e.g., "lose weight", "build muscle", "improve endurance"
   final int? workoutsPerWeek;
-  final String? experienceLevel;  // "beginner", "intermediate", "advanced"
-  final List<String>? preferredWorkouts;  // e.g., ["cardio", "strength", "yoga"]
-  final String? healthConditions;  // Any health conditions to consider
+  final String? experienceLevel; // "beginner", "intermediate", "advanced"
+  final List<String>? preferredWorkouts; // e.g., ["cardio", "strength", "yoga"]
+  final String? healthConditions; // Any health conditions to consider
 
   UserProfile({
     required this.uid,
@@ -30,7 +31,8 @@ class UserProfile {
     this.healthConditions,
   });
 
-  bool get hasValidApiToken => true; // Always true since API token is now server-side
+  bool get hasValidApiToken =>
+      true; // Always true since API token is now server-side
 
   Map<String, dynamic> toJson() {
     return {
@@ -61,7 +63,8 @@ class UserProfile {
       fitnessGoal: json['fitnessGoal'] as String?,
       workoutsPerWeek: json['workoutsPerWeek'] as int?,
       experienceLevel: json['experienceLevel'] as String?,
-      preferredWorkouts: (json['preferredWorkouts'] as List<dynamic>?)?.cast<String>(),
+      preferredWorkouts:
+          (json['preferredWorkouts'] as List<dynamic>?)?.cast<String>(),
       healthConditions: json['healthConditions'] as String?,
     );
   }
@@ -102,15 +105,15 @@ class UserProfile {
           .doc(uid)
           .set(toJson(), SetOptions(merge: true))
           .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              throw FirebaseException(
-                plugin: 'cloud_firestore',
-                message: 'Connection timeout',
-                code: 'timeout',
-              );
-            },
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            message: 'Connection timeout',
+            code: 'timeout',
           );
+        },
+      );
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         throw FirebaseException(
