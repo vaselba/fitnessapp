@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../models/user_profile.dart';
+import '../models/activity.dart';
 
 class SettingsScreen extends StatefulWidget {
   final UserProfile userProfile;
@@ -33,6 +35,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late String _selectedLanguage;
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+
+  // Mock activity data for demonstration
+  final List<Activity> _recentActivities = [
+    Activity(date: DateTime.now().subtract(const Duration(days: 1)), type: 'Cardio', durationMinutes: 30, calories: 200),
+    Activity(date: DateTime.now().subtract(const Duration(days: 2)), type: 'Strength', durationMinutes: 45, calories: 300),
+    Activity(date: DateTime.now().subtract(const Duration(days: 3)), type: 'Yoga', durationMinutes: 20, calories: 80),
+    Activity(date: DateTime.now().subtract(const Duration(days: 4)), type: 'HIIT', durationMinutes: 25, calories: 180),
+    Activity(date: DateTime.now().subtract(const Duration(days: 5)), type: 'Running', durationMinutes: 40, calories: 350),
+  ];
+
+  List<double> get _weeklyMinutes {
+    final now = DateTime.now();
+    return List.generate(7, (i) {
+      final day = now.subtract(Duration(days: i));
+      return _recentActivities
+          .where((a) => a.date.year == day.year && a.date.month == day.month && a.date.day == day.day)
+          .fold(0.0, (sum, a) => sum + a.durationMinutes);
+    }).reversed.toList();
+  }
 
   @override
   void initState() {
@@ -178,6 +199,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              // Activity & Progress Overview
+              Text(_selectedLanguage == 'Български' ? 'Активност и напредък' : 'Activity & Progress',
+                  style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 180,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    barTouchData: BarTouchData(enabled: false),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: true, reservedSize: 28),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                            return Text(days[value.toInt() % 7]);
+                          },
+                        ),
+                      ),
+                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: List.generate(_weeklyMinutes.length, (i) => BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: _weeklyMinutes[i],
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 16,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ],
+                    )),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(_selectedLanguage == 'Български' ? 'Последни активности' : 'Recent Activities',
+                  style: Theme.of(context).textTheme.titleMedium),
+              ..._recentActivities.map((a) => ListTile(
+                    leading: Icon(Icons.fitness_center),
+                    title: Text('${a.type} - ${a.durationMinutes.toInt()} min'),
+                    subtitle: Text('${a.date.month}/${a.date.day}/${a.date.year}'),
+                    trailing: a.calories != null ? Text('${a.calories!.toInt()} kcal') : null,
+                  )),
+              const Divider(height: 32),
               // Theme toggle
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
