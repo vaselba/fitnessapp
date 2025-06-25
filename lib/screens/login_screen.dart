@@ -58,6 +58,57 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _showPasswordResetDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          title: const Text('Reset Password'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: 'Enter your email'),
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final email = controller.text.trim();
+                if (email.isNotEmpty) {
+                  try {
+                    await FirebaseAuth.instance
+                        .sendPasswordResetEmail(email: email);
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Password reset email sent.')),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Error sending reset email.')),
+                      );
+                    }
+                  }
+                }
+              },
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +129,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
+                autofillHints: const [
+                  AutofillHints.username,
+                  AutofillHints.email
+                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
@@ -87,6 +142,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
                   return null;
                 },
+                onFieldSubmitted: (_) => _submitForm(),
+                textInputAction: TextInputAction.next,
+                textCapitalization: TextCapitalization.none,
+                enableSuggestions: true,
+                autocorrect: false,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -96,6 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: OutlineInputBorder(),
                 ),
                 obscureText: true,
+                autofillHints: const [AutofillHints.password],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
@@ -105,15 +166,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
                   return null;
                 },
+                onFieldSubmitted: (_) => _submitForm(),
+                textInputAction: TextInputAction.done,
+                enableSuggestions: false,
+                autocorrect: false,
               ),
               const SizedBox(height: 24),
               if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  child: Semantics(
+                    label: 'Error: ${_errorMessage!}',
+                    liveRegion: true,
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
@@ -124,7 +195,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     ElevatedButton(
                       onPressed: _submitForm,
-                      child: Text(_isLogin ? 'Login' : 'Sign Up'),
+                      child: Semantics(
+                        label: _isLogin
+                            ? 'Login to your account'
+                            : 'Create a new account',
+                        button: true,
+                        child: Text(_isLogin ? 'Login' : 'Sign Up'),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -136,6 +213,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(_isLogin
                           ? 'Don\'t have an account? Sign up'
                           : 'Already have an account? Login'),
+                    ),
+                    TextButton(
+                      onPressed: _isLogin ? _showPasswordResetDialog : null,
+                      child: const Text('Forgot Password?'),
                     ),
                   ],
                 ),
