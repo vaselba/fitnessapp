@@ -10,6 +10,7 @@ Welcome to Fitnessa! This app is your smart companion for workouts, motivation, 
 - **Personal Profile**: Set up your age, weight, height, and fitness goals for a personalized experience.
 - **Progress Tracking**: Log your workouts and see your improvements over time.
 - **Dark Mode**: Switch between light and dark themes for comfortable viewing anytime.
+- **Chat Customization**: Personalize your chat experience with font, chat bubble style, and background color options.
 - **Secure Login**: Sign in with your email and keep your data safe with Firebase authentication.
 - **Multi-Platform**: Use Fitnessa on web, Android, iOS, Windows, Mac, and Linux.
 - **Modern Design**: Clean, responsive interface that works great on any device.
@@ -20,7 +21,7 @@ Welcome to Fitnessa! This app is your smart companion for workouts, motivation, 
 2. **Set Up Your Profile**: Enter your details and fitness preferences.
 3. **Chat with the AI**: Ask for workout ideas, nutrition tips, or motivation.
 4. **Track Your Progress**: Log workouts and monitor your journey.
-5. **Customize**: Toggle dark mode for a look that suits you.
+5. **Customize**: Toggle dark mode and personalize chat font, bubble style, and background color.
 
 ## 💻 Try It Online
 
