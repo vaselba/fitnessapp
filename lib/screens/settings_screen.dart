@@ -7,6 +7,7 @@ import '../widgets/preferences_card.dart';
 import '../widgets/profile_form_card.dart';
 import '../utils/debouncer.dart';
 import '../state/app_state.dart';
+import '../utils/app_logger.dart';
 
 class SettingsScreen extends StatefulWidget {
   final UserProfile userProfile;
@@ -37,10 +38,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   final Debouncer _debouncer = Debouncer(milliseconds: 400);
+  String _selectedFont = 'Roboto';
+  String _chatBubbleStyle = 'rounded';
+  Color _chatBackgroundColor = Colors.white;
 
   @override
   void initState() {
     super.initState();
+    AppLogger.log('SettingsScreen initialized', level: LogLevel.info);
     _nameController = TextEditingController(text: widget.userProfile.name);
     _ageController =
         TextEditingController(text: widget.userProfile.age.toString());
@@ -50,6 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextEditingController(text: widget.userProfile.height.toString());
     _apiTokenController =
         TextEditingController(text: widget.userProfile.apiToken ?? '');
+    // Optionally: Load saved preferences for font, bubble style, color here
   }
 
   @override
@@ -64,6 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _updateProfile() async {
+    AppLogger.log('Attempting to update profile', level: LogLevel.info);
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -83,10 +90,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
 
       await updatedProfile.save();
+      AppLogger.log('Profile updated successfully', level: LogLevel.info);
       if (!mounted) return;
       widget.onProfileUpdated(updatedProfile);
       // Removed language change callback, as it's now handled by AppState
     } on FirebaseException catch (e) {
+      AppLogger.log('FirebaseException during profile update: \\${e.code}', level: LogLevel.error, error: e);
       if (!mounted) return;
       String errorMessage;
       switch (e.code) {
@@ -118,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ? 'Моля влезте отново в профила си'
                   : 'Please sign in again';
           await FirebaseAuth.instance.signOut();
-          if (!mounted) return;
+          AppLogger.log('User signed out due to unauthenticated error', level: LogLevel.warning);
           break;
         default:
           errorMessage =
@@ -136,26 +145,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
     } catch (e) {
+      AppLogger.log('Unknown error during profile update', level: LogLevel.error, error: e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             Provider.of<AppState>(context, listen: false).language ==
                     'Български'
-                ? 'Неочаквана грешка при запазване на профила'
-                : 'Unexpected error saving profile',
+                ? 'Възникна неочаквана грешка'
+                : 'An unexpected error occurred',
           ),
           backgroundColor: Theme.of(context).colorScheme.error,
-          duration: const Duration(seconds: 5),
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _logout() async {
@@ -253,6 +259,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 isDarkMode: appState.isDarkMode,
                 onToggleTheme: (value) {
                   appState.setDarkMode(value);
+                },
+                selectedFont: _selectedFont,
+                onFontChanged: (String? newFont) {
+                  if (newFont != null) {
+                    setState(() {
+                      _selectedFont = newFont;
+                    });
+                  }
+                },
+                chatBubbleStyle: _chatBubbleStyle,
+                onChatBubbleStyleChanged: (String? newStyle) {
+                  if (newStyle != null) {
+                    setState(() {
+                      _chatBubbleStyle = newStyle;
+                    });
+                  }
+                },
+                chatBackgroundColor: _chatBackgroundColor,
+                onChatBackgroundColorChanged: (Color? newColor) {
+                  if (newColor != null) {
+                    setState(() {
+                      _chatBackgroundColor = newColor;
+                    });
+                  }
                 },
               ),
               const SizedBox(height: 24),
